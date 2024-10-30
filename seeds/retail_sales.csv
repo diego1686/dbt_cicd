@@ -1,0 +1,4 @@
+id,product,price,num_sold,category,updated_at
+1,tuna,15,34,ocean,2023-10-01 10:00:00
+2,salmon,20,27,ocean,2023-10-02 11:30:00
+3,bass,18,40,lake,2023-10-03 14:45:00
