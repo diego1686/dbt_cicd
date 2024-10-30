@@ -1,0 +1,40 @@
+name: 'Deploy and Test'
+
+on:
+  pull_request:
+  push:
+    branches: [ "develop" ]
+
+jobs:
+  dbt_job:
+    name: "DBT"
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |-
+        python -m pip install -upgrade pip
+        pip install dbt-core
+        pip install dbt-bigquery
+
+    - name: Set up Google Cloud credentials
+      run: |-
+        echo '${{ secrets.DBT_GOOGLE_BIGQUERY_KEYFILE }}' > ./keyfile.json
+
+    - name: Run dbt run
+      run: |-
+        dbt deps
+        dbt run
+        dbt test
