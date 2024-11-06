@@ -1,0 +1,77 @@
+version: 2
+
+models:
+  - name: sales
+    description: "A table containing sales data for the fish shop"
+    tests:
+      # Test that the num_sold column's values are greater than or equal to 0 for all rows in this table
+      - dbt_utils.expression_is_true:
+          expression: "num_sold >= 0"
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          min_value: 3
+    columns:
+      - name: product
+        description: "The name of the product sold"
+        tests:
+          - not_null
+          - dbt_utils.not_empty_string # technically not needed since we have not_null and accepted_values tests already
+          - accepted_values:
+              values: ["bass", "crappie", "salmon", "cod", "tuna", "trout"]
+      - name: category
+        description: "The category of the product"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ["lake", "river", "ocean"]
+      - name: source
+        description: "The source of the sale"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ["web", "retail"]
+      - name: num_sold
+        description: "The number of units sold"
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: INT64
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 1
+              max_value: 200
+              config:
+                severity: warn
+      - name: updated_at
+        description: "The timestamp when the record was last updated"
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_to_exist
+
+  - name: sales_by_category
+    description: "A table containing sales data for the fish shop, aggregated by category"
+    tests:
+      # Test that the total_sales column's values are greater than or equal to 0 for all rows in this table
+      - dbt_utils.expression_is_true:
+          expression: "total_sales >= 0"
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          min_value: 3
+      - category_sales_totals:
+          sales_model: "{{ ref('sales') }}"
+    columns:
+      - name: category
+        description: "The category of the product"
+        tests:
+          - not_null
+          - unique
+          - accepted_values:
+              values: ["lake", "river", "ocean"]
+      - name: total_sales
+        description: "The total sales for the category"
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: INT64
+      - name: updated_at
+        description: "The timestamp when the record was last updated"
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_to_exist
